@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EcoScan - IA de Reciclagem</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Poppins',sans-serif;
+}
+
+body{
+height:100vh;
+background:linear-gradient(135deg,#0f2027,#203a43,#2c7744);
+display:flex;
+justify-content:center;
+align-items:center;
+color:white;
+}
+
+.container{
+width:90%;
+max-width:1100px;
+background:rgba(255,255,255,0.08);
+backdrop-filter:blur(15px);
+border-radius:20px;
+padding:40px;
+box-shadow:0 0 40px rgba(0,0,0,0.4);
+text-align:center;
+}
+
+.logo{
+font-size:40px;
+font-weight:600;
+color:#7CFF8F;
+}
+
+.subtitle{
+margin-top:10px;
+opacity:0.9;
+}
+
+.main{
+margin-top:40px;
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:30px;
+align-items:center;
+}
+
+.camera{
+background:rgba(0,0,0,0.4);
+border-radius:15px;
+padding:20px;
+}
+
+#webcam-container{
+width:100%;
+height:300px;
+border-radius:10px;
+background:#111;
+display:flex;
+align-items:center;
+justify-content:center;
+}
+
+.result{
+background:rgba(255,255,255,0.06);
+border-radius:15px;
+padding:20px;
+}
+
+.result h2{
+color:#7CFF8F;
+margin-bottom:15px;
+}
+
+#label-container{
+font-size:18px;
+}
+
+.scanButton{
+margin-top:25px;
+padding:15px 35px;
+border:none;
+border-radius:50px;
+background:linear-gradient(90deg,#00ff87,#60efff);
+color:#003;
+font-weight:600;
+font-size:16px;
+cursor:pointer;
+transition:0.3s;
+}
+
+.scanButton:hover{
+transform:scale(1.05);
+}
+
+.footer{
+margin-top:35px;
+opacity:0.7;
+font-size:14px;
+}
+
+@media(max-width:800px){
+
+.main{
+grid-template-columns:1fr;
+}
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="logo">🌱 EcoScan</div>
+<div class="subtitle">IA para reconhecimento de materiais recicláveis</div>
+
+<div class="main">
+
+<div class="camera">
+
+<h3>Câmera</h3>
+
+<div id="webcam-container">
+Sua câmera aparecerá aqui
+</div>
+
+<button class="scanButton" onclick="init()">Iniciar Scanner</button>
+
+</div>
+
+<div class="result">
+
+<h2>Resultado da Análise</h2>
+
+<div id="label-container">
+Aguardando leitura...
+</div>
+
+</div>
+
+</div>
+
+<div class="footer">
+Projeto sustentável • Incentivando a reciclagem ♻️
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+
+<script>
+
+// COLOQUE O LINK DO SEU MODELO AQUI
+const URL = "https://teachablemachine.withgoogle.com/models/mEGaXN12S/";
+
+let model, webcam, labelContainer, maxPredictions;
+
+async function init() {
+
+const modelURL = URL + "model.json";
+const metadataURL = URL + "metadata.json";
+
+model = await tmImage.load(modelURL, metadataURL);
+maxPredictions = model.getTotalClasses();
+
+const flip = true;
+webcam = new tmImage.Webcam(350, 300, flip);
+await webcam.setup();
+await webcam.play();
+window.requestAnimationFrame(loop);
+
+document.getElementById("webcam-container").innerHTML="";
+document.getElementById("webcam-container").appendChild(webcam.canvas);
+
+labelContainer = document.getElementById("label-container");
+labelContainer.innerHTML="";
+
+for (let i = 0; i < maxPredictions; i++) {
+labelContainer.appendChild(document.createElement("div"));
+}
+
+}
+
+async function loop() {
+webcam.update();
+await predict();
+window.requestAnimationFrame(loop);
+}
+
+async function predict() {
+
+const prediction = await model.predict(webcam.canvas);
+
+for (let i = 0; i < maxPredictions; i++) {
+
+const classPrediction =
+prediction[i].className + ": " + (prediction[i].probability * 100).toFixed(2) + "%";
+
+labelContainer.childNodes[i].innerHTML = classPrediction;
+
+}
+
+}
+
+</script>
+
+</body>
+</html>
